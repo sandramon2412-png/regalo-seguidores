@@ -59,14 +59,14 @@ export default function App() {
     } else {
       if (ctx.state === 'suspended') ctx.resume();
       
-      // 1. Base Atmospheric Drone (Very soft)
+      // 1. Base Atmospheric Drone (Soft but audible)
       const baseFreqs = [60, 90]; 
       baseFreqs.forEach(freq => {
         const osc = ctx.createOscillator();
         const oscGain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, ctx.currentTime);
-        oscGain.gain.setValueAtTime(0.02, ctx.currentTime);
+        oscGain.gain.setValueAtTime(0.1, ctx.currentTime);
         osc.connect(oscGain);
         oscGain.connect(gain);
         osc.start();
@@ -83,19 +83,31 @@ export default function App() {
         const osc = ctx.createOscillator();
         const oscGain = ctx.createGain();
         
+        // Simple delay for "reverb" effect
+        const delay = ctx.createDelay();
+        const feedback = ctx.createGain();
+        delay.delayTime.value = 0.5;
+        feedback.gain.value = 0.4;
+        
         osc.type = 'sine';
         osc.frequency.setValueAtTime(noteFreq, ctx.currentTime);
         
         // Envelope for a "soft bell" sound
         oscGain.gain.setValueAtTime(0, ctx.currentTime);
-        oscGain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.1);
+        oscGain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.1);
         oscGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 4);
         
         osc.connect(oscGain);
         oscGain.connect(gain);
         
+        // Connect to delay for echo
+        oscGain.connect(delay);
+        delay.connect(feedback);
+        feedback.connect(delay);
+        delay.connect(gain);
+        
         osc.start();
-        osc.stop(ctx.currentTime + 4);
+        osc.stop(ctx.currentTime + 6);
         
         // Schedule next note at a random interval (2 to 5 seconds)
         const nextNoteDelay = 2000 + Math.random() * 3000;
@@ -105,8 +117,8 @@ export default function App() {
       // Start the melody
       playNote();
 
-      // Fade in the whole system
-      gain.gain.exponentialRampToValueAtTime(0.1, ctx.currentTime + 2);
+      // Fade in the whole system (Higher master volume)
+      gain.gain.exponentialRampToValueAtTime(0.8, ctx.currentTime + 2);
       setIsPlaying(true);
     }
   };
