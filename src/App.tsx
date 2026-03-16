@@ -29,11 +29,33 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = 0.3;
+    const audio = audioRef.current;
+    if (audio) {
+      audio.volume = 0.3;
+      
+      const handleCanPlay = () => {
+        setIsLoadingAudio(false);
+        setAudioError(null);
+      };
+      
+      const handleError = () => {
+        console.error("Audio element error");
+        setAudioError("Error al cargar audio");
+        setIsLoadingAudio(false);
+        setIsPlaying(false);
+      };
+
+      audio.addEventListener('canplay', handleCanPlay);
+      audio.addEventListener('error', handleError);
+      
+      return () => {
+        audio.removeEventListener('canplay', handleCanPlay);
+        audio.removeEventListener('error', handleError);
+      };
     }
   }, []);
 
@@ -41,19 +63,33 @@ export default function App() {
     if (!audioRef.current) return;
 
     try {
+      setAudioError(null);
       if (isPlaying) {
         audioRef.current.pause();
         setIsPlaying(false);
       } else {
         setIsLoadingAudio(true);
-        await audioRef.current.play();
-        setIsPlaying(true);
-        setIsLoadingAudio(false);
+        // Force reload if there was an error
+        if (audioError) {
+          audioRef.current.load();
+        }
+        
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          setIsPlaying(true);
+          setIsLoadingAudio(false);
+        }
       }
-    } catch (error) {
-      console.error("Audio error:", error);
+    } catch (error: any) {
+      console.error("Audio playback error:", error);
       setIsPlaying(false);
       setIsLoadingAudio(false);
+      if (error.name === 'NotAllowedError') {
+        setAudioError("Haz clic de nuevo");
+      } else {
+        setAudioError("Error de reproducción");
+      }
     }
   };
 
@@ -475,7 +511,7 @@ export default function App() {
             <button 
               onClick={toggleMusic}
               disabled={isLoadingAudio}
-              className={`p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-colors cursor-pointer flex items-center gap-2 px-3 ${isPlaying ? 'animate-pulse' : ''} ${isLoadingAudio ? 'opacity-50 cursor-wait' : ''}`}
+              className={`p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-all cursor-pointer flex items-center gap-2 px-3 border border-brand-accent/20 ${isPlaying ? 'animate-pulse shadow-lg shadow-brand-accent/20' : ''} ${isLoadingAudio ? 'opacity-50 cursor-wait' : ''}`}
               title={isPlaying ? "Pausar música" : "Escuchar música"}
             >
               {isLoadingAudio ? (
@@ -484,14 +520,15 @@ export default function App() {
                 isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />
               )}
               <span className="text-[10px] uppercase tracking-widest font-bold">
-                {isLoadingAudio ? "Cargando..." : `Música: ${isPlaying ? "On" : "Off"}`}
+                {isLoadingAudio ? "Cargando..." : audioError ? audioError : `Música: ${isPlaying ? "On" : "Off"}`}
               </span>
             </button>
             <audio 
               ref={audioRef}
-              src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808f3030e.mp3?filename=meditation-bowl-ambient-112178.mp3"
+              src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
               loop
               preload="auto"
+              crossOrigin="anonymous"
             />
           </div>
           <div className="flex items-center gap-3">
