@@ -69,7 +69,8 @@ export default function App() {
         setIsPlaying(false);
       } else {
         setIsLoadingAudio(true);
-        // Force reload if there was an error
+        
+        // If there was an error, try to reload the source
         if (audioError) {
           audioRef.current.load();
         }
@@ -85,10 +86,15 @@ export default function App() {
       console.error("Audio playback error:", error);
       setIsPlaying(false);
       setIsLoadingAudio(false);
+      
       if (error.name === 'NotAllowedError') {
-        setAudioError("Haz clic de nuevo");
+        setAudioError("Toca de nuevo");
       } else {
-        setAudioError("Error de reproducción");
+        setAudioError("Reintentar");
+        // Try to recover by reloading
+        if (audioRef.current) {
+          audioRef.current.load();
+        }
       }
     }
   };
@@ -525,10 +531,9 @@ export default function App() {
             </button>
             <audio 
               ref={audioRef}
-              src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+              src="https://assets.mixkit.co/music/preview/mixkit-meditation-soft-bells-565.mp3"
               loop
               preload="auto"
-              crossOrigin="anonymous"
             />
           </div>
           <div className="flex items-center gap-3">
