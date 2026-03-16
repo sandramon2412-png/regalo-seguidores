@@ -38,57 +38,109 @@ export default function App() {
       audio.volume = 0.3;
       
       const handleCanPlay = () => {
+        console.log("Audio can play");
         setIsLoadingAudio(false);
         setAudioError(null);
       };
       
-      const handleError = () => {
-        console.error("Audio element error");
-        setAudioError("Error al cargar audio");
+      const handleError = (e: any) => {
+        const error = e.target.error;
+        console.error("Audio element error details:", {
+          code: error?.code,
+          message: error?.message
+        });
+        setAudioError("Error: Reintenta");
         setIsLoadingAudio(false);
         setIsPlaying(false);
       };
 
+      const handlePlaying = () => {
+        console.log("Audio is playing");
+        setIsPlaying(true);
+        setIsLoadingAudio(false);
+        setAudioError(null);
+      };
+
+      const handlePause = () => {
+        setIsPlaying(false);
+      };
+
+      const handleWaiting = () => {
+        console.log("Audio is waiting/buffering");
+        setIsLoadingAudio(true);
+      };
+
+      const handleLoadStart = () => {
+        console.log("Audio load started");
+        setIsLoadingAudio(true);
+      };
+
+      const handleEnded = () => {
+        console.log("Audio ended, restarting if loop is set");
+        if (audio.loop) {
+          audio.play().catch(e => console.error("Restart error:", e));
+        } else {
+          setIsPlaying(false);
+        }
+      };
+
+      audio.addEventListener('loadstart', handleLoadStart);
       audio.addEventListener('canplay', handleCanPlay);
+      audio.addEventListener('canplaythrough', handleCanPlay);
+      audio.addEventListener('loadedmetadata', handleCanPlay);
+      audio.addEventListener('playing', handlePlaying);
+      audio.addEventListener('pause', handlePause);
+      audio.addEventListener('ended', handleEnded);
+      audio.addEventListener('waiting', handleWaiting);
+      audio.addEventListener('stalled', handleWaiting);
+      audio.addEventListener('abort', handleError);
+      audio.addEventListener('emptied', handleError);
       audio.addEventListener('error', handleError);
       
       return () => {
+        audio.removeEventListener('loadstart', handleLoadStart);
         audio.removeEventListener('canplay', handleCanPlay);
+        audio.removeEventListener('canplaythrough', handleCanPlay);
+        audio.removeEventListener('loadedmetadata', handleCanPlay);
+        audio.removeEventListener('playing', handlePlaying);
+        audio.removeEventListener('pause', handlePause);
+        audio.removeEventListener('ended', handleEnded);
+        audio.removeEventListener('waiting', handleWaiting);
+        audio.removeEventListener('stalled', handleWaiting);
+        audio.removeEventListener('abort', handleError);
+        audio.removeEventListener('emptied', handleError);
         audio.removeEventListener('error', handleError);
       };
     }
   }, []);
 
   const toggleMusic = () => {
+    console.log("Toggle music clicked, current state:", { isPlaying, isLoadingAudio });
     if (!audioRef.current) return;
 
     setAudioError(null);
     if (isPlaying) {
       audioRef.current.pause();
-      setIsPlaying(false);
     } else {
       setIsLoadingAudio(true);
       
-      // Use the standard play() which returns a promise
+      // Aggressive reset and play
+      const currentSrc = audioRef.current.src;
+      audioRef.current.src = "";
+      audioRef.current.src = currentSrc;
+      audioRef.current.load();
       const playPromise = audioRef.current.play();
       
       if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setIsPlaying(true);
-            setIsLoadingAudio(false);
-            setAudioError(null);
-          })
-          .catch((error) => {
-            console.error("Playback error:", error);
-            setIsPlaying(false);
-            setIsLoadingAudio(false);
-            if (error.name === 'NotAllowedError') {
-              setAudioError("Toca de nuevo");
-            } else {
-              setAudioError("Error");
-            }
-          });
+        playPromise.catch((error) => {
+          console.error("Playback error:", error);
+          setIsLoadingAudio(false);
+          if (error.name === 'NotAllowedError') {
+            setAudioError("Toca de nuevo");
+          } else {
+            setAudioError("Error");
+          }
+        });
       }
     }
   };
@@ -525,7 +577,7 @@ export default function App() {
             </button>
             <audio 
               ref={audioRef}
-              src="https://cdn.pixabay.com/audio/2022/03/15/audio_783910622b.mp3"
+              src="https://assets.mixkit.co/music/preview/mixkit-meditation-soft-bells-565.mp3"
               loop
               preload="auto"
             />
