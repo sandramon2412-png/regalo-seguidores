@@ -47,41 +47,65 @@ export default function App() {
     const gain = gainNodeRef.current!;
 
     if (isPlaying) {
-      // Fade out
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.5);
+      // Fade out everything
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2);
       setTimeout(() => {
-        oscillatorRef.current.forEach(osc => osc.stop());
+        oscillatorRef.current.forEach(osc => {
+          try { osc.stop(); } catch(e) {}
+        });
         oscillatorRef.current = [];
         setIsPlaying(false);
-      }, 1500);
+      }, 2000);
     } else {
       if (ctx.state === 'suspended') ctx.resume();
       
-      // Create deep meditative drones
-      const freqs = [60, 121, 182]; // Harmonic frequencies for a "singing bowl" effect
-      freqs.forEach(freq => {
+      // 1. Base Atmospheric Drone (Very soft)
+      const baseFreqs = [60, 90]; 
+      baseFreqs.forEach(freq => {
+        const osc = ctx.createOscillator();
+        const oscGain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        oscGain.gain.setValueAtTime(0.02, ctx.currentTime);
+        osc.connect(oscGain);
+        oscGain.connect(gain);
+        osc.start();
+        oscillatorRef.current.push(osc);
+      });
+
+      // 2. Melodic Generator (Pentatonic Scale)
+      const scale = [220, 246.94, 293.66, 329.63, 392, 440]; // A3, B3, D4, E4, G4, A4
+      
+      const playNote = () => {
+        if (!oscillatorRef.current.length) return; // Stop if music was turned off
+        
+        const noteFreq = scale[Math.floor(Math.random() * scale.length)];
         const osc = ctx.createOscillator();
         const oscGain = ctx.createGain();
         
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        osc.frequency.setValueAtTime(noteFreq, ctx.currentTime);
         
-        // LFO for "breathing" effect
-        const lfo = ctx.createOscillator();
-        const lfoGain = ctx.createGain();
-        lfo.frequency.setValueAtTime(0.1, ctx.currentTime); // Very slow pulse
-        lfoGain.gain.setValueAtTime(0.05, ctx.currentTime);
-        lfo.connect(lfoGain.gain);
+        // Envelope for a "soft bell" sound
+        oscGain.gain.setValueAtTime(0, ctx.currentTime);
+        oscGain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.1);
+        oscGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 4);
         
         osc.connect(oscGain);
         oscGain.connect(gain);
         
         osc.start();
-        lfo.start();
-        oscillatorRef.current.push(osc);
-      });
+        osc.stop(ctx.currentTime + 4);
+        
+        // Schedule next note at a random interval (2 to 5 seconds)
+        const nextNoteDelay = 2000 + Math.random() * 3000;
+        setTimeout(playNote, nextNoteDelay);
+      };
 
-      // Fade in
+      // Start the melody
+      playNote();
+
+      // Fade in the whole system
       gain.gain.exponentialRampToValueAtTime(0.1, ctx.currentTime + 2);
       setIsPlaying(true);
     }
