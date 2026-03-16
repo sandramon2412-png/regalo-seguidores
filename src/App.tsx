@@ -28,31 +28,32 @@ interface PageContent {
 export default function App() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const toggleMusic = () => {
+  useEffect(() => {
     if (audioRef.current) {
+      audioRef.current.volume = 0.3;
+    }
+  }, []);
+
+  const toggleMusic = async () => {
+    if (!audioRef.current) return;
+
+    try {
       if (isPlaying) {
         audioRef.current.pause();
         setIsPlaying(false);
       } else {
-        audioRef.current.volume = 0.4; // Set a comfortable volume
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              setIsPlaying(true);
-            })
-            .catch(error => {
-              console.error("Playback failed:", error);
-              setIsPlaying(false);
-              // Fallback for some browsers
-              if (error.name === 'NotAllowedError') {
-                alert("Haz clic de nuevo para permitir la música en tu navegador.");
-              }
-            });
-        }
+        setIsLoadingAudio(true);
+        await audioRef.current.play();
+        setIsPlaying(true);
+        setIsLoadingAudio(false);
       }
+    } catch (error) {
+      console.error("Audio error:", error);
+      setIsPlaying(false);
+      setIsLoadingAudio(false);
     }
   };
 
@@ -473,20 +474,24 @@ export default function App() {
           <div className="flex items-center gap-2">
             <button 
               onClick={toggleMusic}
-              className={`p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-colors cursor-pointer flex items-center gap-2 px-3 ${isPlaying ? 'animate-pulse' : ''}`}
+              disabled={isLoadingAudio}
+              className={`p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-colors cursor-pointer flex items-center gap-2 px-3 ${isPlaying ? 'animate-pulse' : ''} ${isLoadingAudio ? 'opacity-50 cursor-wait' : ''}`}
               title={isPlaying ? "Pausar música" : "Escuchar música"}
             >
-              {isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              {isLoadingAudio ? (
+                <div className="w-4 h-4 border-2 border-brand-accent border-t-transparent rounded-full animate-spin" />
+              ) : (
+                isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />
+              )}
               <span className="text-[10px] uppercase tracking-widest font-bold">
-                Música: {isPlaying ? "On" : "Off"}
+                {isLoadingAudio ? "Cargando..." : `Música: ${isPlaying ? "On" : "Off"}`}
               </span>
             </button>
             <audio 
               ref={audioRef}
-              src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
+              src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808f3030e.mp3?filename=meditation-bowl-ambient-112178.mp3"
               loop
               preload="auto"
-              crossOrigin="anonymous"
             />
           </div>
           <div className="flex items-center gap-3">
