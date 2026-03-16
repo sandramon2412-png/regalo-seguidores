@@ -59,42 +59,36 @@ export default function App() {
     }
   }, []);
 
-  const toggleMusic = async () => {
+  const toggleMusic = () => {
     if (!audioRef.current) return;
 
-    try {
-      setAudioError(null);
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        setIsLoadingAudio(true);
-        
-        // If there was an error, try to reload the source
-        if (audioError) {
-          audioRef.current.load();
-        }
-        
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          await playPromise;
-          setIsPlaying(true);
-          setIsLoadingAudio(false);
-        }
-      }
-    } catch (error: any) {
-      console.error("Audio playback error:", error);
+    setAudioError(null);
+    if (isPlaying) {
+      audioRef.current.pause();
       setIsPlaying(false);
-      setIsLoadingAudio(false);
+    } else {
+      setIsLoadingAudio(true);
       
-      if (error.name === 'NotAllowedError') {
-        setAudioError("Toca de nuevo");
-      } else {
-        setAudioError("Reintentar");
-        // Try to recover by reloading
-        if (audioRef.current) {
-          audioRef.current.load();
-        }
+      // Use the standard play() which returns a promise
+      const playPromise = audioRef.current.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+            setIsLoadingAudio(false);
+            setAudioError(null);
+          })
+          .catch((error) => {
+            console.error("Playback error:", error);
+            setIsPlaying(false);
+            setIsLoadingAudio(false);
+            if (error.name === 'NotAllowedError') {
+              setAudioError("Toca de nuevo");
+            } else {
+              setAudioError("Error");
+            }
+          });
       }
     }
   };
@@ -531,7 +525,7 @@ export default function App() {
             </button>
             <audio 
               ref={audioRef}
-              src="https://assets.mixkit.co/music/preview/mixkit-meditation-soft-bells-565.mp3"
+              src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
               loop
               preload="auto"
             />

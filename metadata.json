@@ -1,5 +1,5 @@
 {
   "name": "Código Cuerpo - 5 Señales",
   "description": "Una guía interactiva para aprender a escuchar las señales que tu cuerpo te envía.",
-  "requestFramePermissions": []
+  "requestFramePermissions": ["autoplay"]
 }
