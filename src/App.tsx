@@ -28,6 +28,7 @@ interface PageContent {
 export default function App() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const toggleMusic = () => {
@@ -37,11 +38,21 @@ export default function App() {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(err => {
-        console.error("Error al reproducir:", err);
-        alert("Aún no has subido el archivo 'musica.mp3' o el formato no es compatible.");
-      });
-      setIsPlaying(true);
+      setIsLoading(true);
+      const playPromise = audioRef.current.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+            setIsLoading(false);
+          })
+          .catch(err => {
+            console.error("Error al reproducir:", err);
+            setIsPlaying(false);
+            setIsLoading(false);
+          });
+      }
     }
   };
 
@@ -462,18 +473,24 @@ export default function App() {
           <div className="flex items-center gap-2">
             <button 
               onClick={toggleMusic}
-              className={`p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-all cursor-pointer flex items-center gap-2 px-3 border border-brand-accent/20 ${isPlaying ? 'animate-pulse shadow-lg shadow-brand-accent/20' : ''}`}
-              title={isPlaying ? "Detener sonido Zen" : "Escuchar sonido Zen"}
+              disabled={isLoading}
+              className={`p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-all cursor-pointer flex items-center gap-2 px-3 border border-brand-accent/20 ${isPlaying ? 'animate-pulse shadow-lg shadow-brand-accent/20' : ''} ${isLoading ? 'opacity-50 cursor-wait' : ''}`}
+              title={isPlaying ? "Detener música" : "Escuchar música Zen"}
             >
-              {isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-brand-accent border-t-transparent rounded-full animate-spin" />
+              ) : (
+                isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />
+              )}
               <span className="text-[10px] uppercase tracking-widest font-bold">
-                {isPlaying ? "Música: On" : "Música: Off"}
+                {isLoading ? "Cargando..." : (isPlaying ? "Música: On" : "Música: Off")}
               </span>
             </button>
             <audio 
               ref={audioRef}
-              src="https://cdn.pixabay.com/audio/2022/03/24/audio_7307092141.mp3"
+              src="https://cdn.pixabay.com/audio/2022/05/27/audio_180873747b.mp3"
               loop
+              preload="auto"
             />
           </div>
           <div className="flex items-center gap-3">
