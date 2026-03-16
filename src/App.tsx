@@ -458,10 +458,13 @@ export default function App() {
           <div className="flex items-center gap-2">
             <button 
               onClick={toggleMusic}
-              className="p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-colors cursor-pointer"
+              className="p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-colors cursor-pointer flex items-center gap-2 px-3"
               title={isPlaying ? "Pausar música" : "Escuchar música"}
             >
               {isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              <span className="text-[10px] uppercase tracking-widest font-bold">
+                Música: {isPlaying ? "On" : "Off"}
+              </span>
             </button>
             <audio 
               ref={audioRef}
