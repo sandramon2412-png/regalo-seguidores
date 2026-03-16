@@ -34,10 +34,25 @@ export default function App() {
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
+        setIsPlaying(false);
       } else {
-        audioRef.current.play().catch(e => console.log("Audio play blocked", e));
+        audioRef.current.volume = 0.4; // Set a comfortable volume
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setIsPlaying(true);
+            })
+            .catch(error => {
+              console.error("Playback failed:", error);
+              setIsPlaying(false);
+              // Fallback for some browsers
+              if (error.name === 'NotAllowedError') {
+                alert("Haz clic de nuevo para permitir la música en tu navegador.");
+              }
+            });
+        }
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -458,7 +473,7 @@ export default function App() {
           <div className="flex items-center gap-2">
             <button 
               onClick={toggleMusic}
-              className="p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-colors cursor-pointer flex items-center gap-2 px-3"
+              className={`p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-colors cursor-pointer flex items-center gap-2 px-3 ${isPlaying ? 'animate-pulse' : ''}`}
               title={isPlaying ? "Pausar música" : "Escuchar música"}
             >
               {isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -468,8 +483,10 @@ export default function App() {
             </button>
             <audio 
               ref={audioRef}
-              src="https://assets.mixkit.co/music/preview/mixkit-meditation-soft-bells-565.mp3"
+              src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
               loop
+              preload="auto"
+              crossOrigin="anonymous"
             />
           </div>
           <div className="flex items-center gap-3">
