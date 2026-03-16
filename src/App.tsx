@@ -11,8 +11,6 @@ import {
   BookOpen,
   ArrowRight,
   Sparkles,
-  Printer,
-  Download,
   Volume2,
   VolumeX
 } from 'lucide-react';
@@ -375,101 +373,13 @@ export default function App() {
   };
 
   useEffect(() => {
-    // Check if we should trigger print automatically (when opened in new tab)
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('print') === 'true') {
-      // Small delay to ensure content is rendered
-      setTimeout(() => {
-        window.print();
-        // Clean up URL after printing
-        window.history.replaceState({}, '', window.location.pathname);
-      }, 1000);
-    }
+    // No-op
   }, []);
-
-  const handlePrint = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const isInIframe = window.self !== window.top;
-
-    if (isInIframe) {
-      // If in iframe, open in new tab with print param
-      const url = new URL(window.location.href);
-      url.searchParams.set('print', 'true');
-      window.open(url.toString(), '_blank');
-    } else {
-      // If already in main window, just print
-      window.focus();
-      window.print();
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Printable Version (Hidden on screen) */}
-      <div className="print-only">
-        {pages.map((page, index) => (
-          <div key={page.id} className="print-page">
-            {page.id === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="w-32 h-32 mx-auto mb-12 flex items-center justify-center overflow-hidden rounded-full border border-brand-accent/10">
-                  <img 
-                    src="https://i.imgur.com/dxxQ0CC.jpeg" 
-                    alt="Logo" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h1 className="text-6xl font-serif uppercase tracking-widest leading-tight mb-4">
-                  5 Señales que tu cuerpo te envía
-                </h1>
-                <p className="text-2xl font-serif italic text-brand-accent mb-12">
-                  (y cómo escucharlas)
-                </p>
-                <p className="text-xl font-serif italic opacity-60">Guía de Biodescodificación Femenina</p>
-              </div>
-            ) : page.id === 1 ? (
-              <div className="max-w-4xl mx-auto">
-                <h2 className="text-4xl font-serif text-brand-accent italic mb-8">Querida,</h2>
-                <div className="grid grid-cols-2 gap-12 items-center">
-                  <div className="space-y-6 text-lg">
-                    <p>¿Alguna vez has sentido un dolor que aparece y desaparece sin razón? ¿Una tensión que no se va? ¿Un nudo en la garganta que no sabes por qué está ahí?</p>
-                    <p>Tu cuerpo no es tu enemigo. Es un mensajero. Te envía señales constantemente, pero a veces no sabemos interpretarlas.</p>
-                    <p>En esta mini-guía te comparto 5 señales muy comunes y lo que tu cuerpo puede estar queriéndote decir con cada una.</p>
-                  </div>
-                  <img 
-                    src="https://i.imgur.com/EoG0Tut.png" 
-                    alt="Bienvenida" 
-                    className="w-full h-auto rounded-2xl"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="max-w-4xl mx-auto">
-                {page.title && (
-                  <h2 className="text-4xl font-serif text-brand-accent italic mb-8 border-b border-brand-accent/10 pb-4">
-                    {page.title}
-                  </h2>
-                )}
-                <div className="text-lg">
-                  {page.content}
-                </div>
-              </div>
-            )}
-            
-            {/* PDF Footer */}
-            <div className="mt-auto pt-8 flex flex-col gap-2 text-[10px] text-brand-accent/50 border-t border-brand-accent/10">
-              <div className="flex justify-between">
-                <a href="https://regalo-seguidores.vercel.app" className="hover:underline">Guía Interactiva: regalo-seguidores.vercel.app</a>
-                <a href="https://tubiodescodificacion.vercel.app/" className="hover:underline">Web: tubiodescodificacion.vercel.app</a>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
       {/* Header / Progress */}
-      <header className="fixed top-0 left-0 right-0 p-6 flex justify-between items-center z-50 no-print">
+      <header className="fixed top-0 left-0 right-0 p-6 flex justify-between items-center z-50">
         <div className="flex items-center gap-4 md:gap-8">
           <div className="flex items-center gap-2">
             <button 
@@ -506,18 +416,6 @@ export default function App() {
               Código Cuerpo
             </div>
           </div>
-          
-          <div className="flex items-center gap-4">
-            <button 
-              type="button"
-              onClick={handlePrint}
-              className="flex items-center gap-2 text-[10px] md:text-xs uppercase tracking-widest font-semibold text-brand-accent hover:bg-brand-accent hover:text-white transition-all bg-white/50 px-4 py-2 rounded-full border border-brand-accent/20 cursor-pointer shadow-sm active:scale-95"
-              title="Imprimir o Guardar como PDF"
-            >
-              <Printer className="w-3 h-3 md:w-4 h-4" />
-              <span>Imprimir / PDF</span>
-            </button>
-          </div>
         </div>
         <div className="flex gap-1">
           {pages.map((_, i) => (
@@ -530,7 +428,7 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 relative overflow-hidden flex items-center justify-center pt-20 pb-24 no-print">
+      <main className="flex-1 relative overflow-hidden flex items-center justify-center pt-20 pb-24">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentPage}
@@ -553,7 +451,7 @@ export default function App() {
       </main>
 
       {/* Navigation */}
-      <footer className="fixed bottom-0 left-0 right-0 p-8 flex justify-between items-center z-50 no-print">
+      <footer className="fixed bottom-0 left-0 right-0 p-8 flex justify-between items-center z-50">
         <button 
           onClick={prev}
           disabled={currentPage === 0}
