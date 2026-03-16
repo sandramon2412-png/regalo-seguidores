@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronRight, 
@@ -12,7 +12,9 @@ import {
   ArrowRight,
   Sparkles,
   Printer,
-  Download
+  Download,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 interface PageContent {
@@ -25,6 +27,19 @@ interface PageContent {
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const toggleMusic = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play().catch(e => console.log("Audio play blocked", e));
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
 
   const pages: PageContent[] = [
     {
@@ -317,12 +332,12 @@ export default function App() {
             <p className="mb-2 font-semibold text-brand-accent uppercase tracking-widest">Guía Interactiva</p>
             <p className="opacity-70 mb-4">Puedes acceder a esta guía en su formato interactivo con música y animaciones en:</p>
             <a 
-              href="https://bit.ly/Tucuerponotefalla-tehabla" 
+              href="https://regalo-seguidores.vercel.app" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-brand-accent font-medium break-all hover:underline"
             >
-              https://bit.ly/Tucuerponotefalla-tehabla
+              https://regalo-seguidores.vercel.app
             </a>
           </div>
 
@@ -429,7 +444,7 @@ export default function App() {
             {/* PDF Footer */}
             <div className="mt-auto pt-8 flex flex-col gap-2 text-[10px] text-brand-accent/50 border-t border-brand-accent/10">
               <div className="flex justify-between">
-                <a href="https://bit.ly/Tucuerponotefalla-tehabla" className="hover:underline">Guía Interactiva: bit.ly/Tucuerponotefalla-tehabla</a>
+                <a href="https://regalo-seguidores.vercel.app" className="hover:underline">Guía Interactiva: regalo-seguidores.vercel.app</a>
                 <a href="https://tubiodescodificacion.vercel.app/" className="hover:underline">Web: tubiodescodificacion.vercel.app</a>
               </div>
             </div>
@@ -440,6 +455,20 @@ export default function App() {
       {/* Header / Progress */}
       <header className="fixed top-0 left-0 right-0 p-6 flex justify-between items-center z-50 no-print">
         <div className="flex items-center gap-4 md:gap-8">
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleMusic}
+              className="p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-colors cursor-pointer"
+              title={isPlaying ? "Pausar música" : "Escuchar música"}
+            >
+              {isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+            <audio 
+              ref={audioRef}
+              src="https://assets.mixkit.co/music/preview/mixkit-meditation-soft-bells-565.mp3"
+              loop
+            />
+          </div>
           <div className="flex items-center gap-3">
             <img 
               src="https://i.imgur.com/dxxQ0CC.jpeg" 
