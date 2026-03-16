@@ -525,19 +525,15 @@ export default function App() {
             </button>
             <audio 
               ref={audioRef}
-              src="https://archive.org/download/FREE_background_music_zen_meditation/Zen%20Meditation.mp3"
+              src="https://actions.google.com/sounds/v1/ambiences/soft_humming_meditation.ogg"
               loop
-              preload="none"
+              preload="auto"
+              crossOrigin="anonymous"
             />
             {audioError && (
-              <a 
-                href="https://archive.org/download/FREE_background_music_zen_meditation/Zen%20Meditation.mp3" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-[9px] text-brand-accent underline ml-2 animate-pulse"
-              >
-                Abrir música relajante en pestaña nueva
-              </a>
+              <span className="text-[9px] text-brand-accent ml-2 animate-pulse">
+                Intentando reconectar...
+              </span>
             )}
           </div>
           <div className="flex items-center gap-3">
