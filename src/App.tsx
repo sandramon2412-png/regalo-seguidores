@@ -525,18 +525,18 @@ export default function App() {
             </button>
             <audio 
               ref={audioRef}
-              src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+              src="https://assets.mixkit.co/music/preview/mixkit-deep-meditation-109.mp3"
               loop
               preload="none"
             />
             {audioError && (
               <a 
-                href="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" 
+                href="https://assets.mixkit.co/music/preview/mixkit-deep-meditation-109.mp3" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-[9px] text-brand-accent underline ml-2 animate-pulse"
               >
-                Abrir música en pestaña nueva
+                Abrir música relajante en pestaña nueva
               </a>
             )}
           </div>
