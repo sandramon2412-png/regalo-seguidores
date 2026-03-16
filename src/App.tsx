@@ -28,6 +28,7 @@ interface PageContent {
 export default function App() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioSrc, setAudioSrc] = useState("https://upload.wikimedia.org/wikipedia/commons/2/21/Ambient_music_loop.mp3");
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const toggleMusic = () => {
@@ -37,15 +38,23 @@ export default function App() {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play()
-        .then(() => {
-          setIsPlaying(true);
-        })
-        .catch(err => {
-          console.error("Error de reproducción:", err);
-          setIsPlaying(false);
-        });
+      // Cambiamos el estado visual inmediatamente para dar feedback al usuario
+      setIsPlaying(true);
+      
+      audioRef.current.play().catch(err => {
+        console.error("Error de reproducción:", err);
+        setIsPlaying(false);
+        // Si falla la primera fuente, intentamos con la de respaldo
+        if (audioSrc.includes("wikimedia")) {
+          setAudioSrc("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3");
+        }
+      });
     }
+  };
+
+  const handleAudioError = () => {
+    console.warn("Error cargando audio principal, intentando respaldo...");
+    setAudioSrc("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3");
   };
 
   const pages: PageContent[] = [
@@ -465,7 +474,11 @@ export default function App() {
           <div className="flex items-center gap-2">
             <button 
               onClick={toggleMusic}
-              className={`p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-all cursor-pointer flex items-center gap-2 px-3 border border-brand-accent/20 ${isPlaying ? 'animate-pulse shadow-lg shadow-brand-accent/20' : ''}`}
+              className={`p-2 rounded-full transition-all cursor-pointer flex items-center gap-2 px-3 border ${
+                isPlaying 
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 animate-pulse shadow-lg shadow-emerald-500/20' 
+                  : 'bg-brand-accent/10 text-brand-accent border-brand-accent/20 hover:bg-brand-accent/20'
+              }`}
               title={isPlaying ? "Detener música" : "Escuchar música Zen"}
             >
               {isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -475,9 +488,11 @@ export default function App() {
             </button>
             <audio 
               ref={audioRef}
-              src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+              src={audioSrc}
               loop
-              crossOrigin="anonymous"
+              onStalled={handleAudioError}
+              onError={handleAudioError}
+              preload="auto"
             />
           </div>
           <div className="flex items-center gap-3">
