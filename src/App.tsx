@@ -28,68 +28,62 @@ interface PageContent {
 export default function App() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
-  const [audioError, setAudioError] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const oscillatorRef = useRef<OscillatorNode[]>([]);
+  const gainNodeRef = useRef<GainNode | null>(null);
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.volume = 0.3;
-      
-      const handleCanPlay = () => {
-        setIsLoadingAudio(false);
-        setAudioError(null);
-      };
-      
-      const handleError = (e: any) => {
-        console.error("Audio error:", e);
-        setAudioError("Error");
-        setIsLoadingAudio(false);
-        setIsPlaying(false);
-      };
-
-      const handlePlaying = () => {
-        setIsPlaying(true);
-        setIsLoadingAudio(false);
-      };
-
-      const handlePause = () => {
-        setIsPlaying(false);
-      };
-
-      audio.addEventListener('canplay', handleCanPlay);
-      audio.addEventListener('playing', handlePlaying);
-      audio.addEventListener('pause', handlePause);
-      audio.addEventListener('error', handleError);
-      
-      return () => {
-        audio.removeEventListener('canplay', handleCanPlay);
-        audio.removeEventListener('playing', handlePlaying);
-        audio.removeEventListener('pause', handlePause);
-        audio.removeEventListener('error', handleError);
-      };
+  const initAudio = () => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      gainNodeRef.current = audioCtxRef.current.createGain();
+      gainNodeRef.current.connect(audioCtxRef.current.destination);
+      gainNodeRef.current.gain.setValueAtTime(0, audioCtxRef.current.currentTime);
     }
-  }, []);
+  };
 
   const toggleMusic = () => {
-    if (!audioRef.current) return;
+    initAudio();
+    const ctx = audioCtxRef.current!;
+    const gain = gainNodeRef.current!;
 
     if (isPlaying) {
-      audioRef.current.pause();
+      // Fade out
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.5);
+      setTimeout(() => {
+        oscillatorRef.current.forEach(osc => osc.stop());
+        oscillatorRef.current = [];
+        setIsPlaying(false);
+      }, 1500);
     } else {
-      setIsLoadingAudio(true);
-      setAudioError(null);
+      if (ctx.state === 'suspended') ctx.resume();
       
-      audioRef.current.play().catch((error) => {
-        console.error("Playback error:", error);
-        setIsLoadingAudio(false);
-        if (error.name === 'NotAllowedError') {
-          setAudioError("Haz clic de nuevo");
-        } else {
-          setAudioError("No disponible");
-        }
+      // Create deep meditative drones
+      const freqs = [60, 121, 182]; // Harmonic frequencies for a "singing bowl" effect
+      freqs.forEach(freq => {
+        const osc = ctx.createOscillator();
+        const oscGain = ctx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        
+        // LFO for "breathing" effect
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+        lfo.frequency.setValueAtTime(0.1, ctx.currentTime); // Very slow pulse
+        lfoGain.gain.setValueAtTime(0.05, ctx.currentTime);
+        lfo.connect(lfoGain.gain);
+        
+        osc.connect(oscGain);
+        oscGain.connect(gain);
+        
+        osc.start();
+        lfo.start();
+        oscillatorRef.current.push(osc);
       });
+
+      // Fade in
+      gain.gain.exponentialRampToValueAtTime(0.1, ctx.currentTime + 2);
+      setIsPlaying(true);
     }
   };
 
@@ -510,31 +504,14 @@ export default function App() {
           <div className="flex items-center gap-2">
             <button 
               onClick={toggleMusic}
-              disabled={isLoadingAudio}
-              className={`p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-all cursor-pointer flex items-center gap-2 px-3 border border-brand-accent/20 ${isPlaying ? 'animate-pulse shadow-lg shadow-brand-accent/20' : ''} ${isLoadingAudio ? 'opacity-50 cursor-wait' : ''}`}
-              title={isPlaying ? "Pausar música" : "Escuchar música"}
+              className={`p-2 rounded-full bg-brand-accent/10 text-brand-accent hover:bg-brand-accent/20 transition-all cursor-pointer flex items-center gap-2 px-3 border border-brand-accent/20 ${isPlaying ? 'animate-pulse shadow-lg shadow-brand-accent/20' : ''}`}
+              title={isPlaying ? "Detener sonido Zen" : "Escuchar sonido Zen"}
             >
-              {isLoadingAudio ? (
-                <div className="w-4 h-4 border-2 border-brand-accent border-t-transparent rounded-full animate-spin" />
-              ) : (
-                isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />
-              )}
+              {isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               <span className="text-[10px] uppercase tracking-widest font-bold">
-                {isLoadingAudio ? "Cargando..." : audioError ? audioError : `Música: ${isPlaying ? "On" : "Off"}`}
+                {isPlaying ? "Sonido Zen: On" : "Sonido Zen: Off"}
               </span>
             </button>
-            <audio 
-              ref={audioRef}
-              src="https://actions.google.com/sounds/v1/ambiences/soft_humming_meditation.ogg"
-              loop
-              preload="auto"
-              crossOrigin="anonymous"
-            />
-            {audioError && (
-              <span className="text-[9px] text-brand-accent ml-2 animate-pulse">
-                Intentando reconectar...
-              </span>
-            )}
           </div>
           <div className="flex items-center gap-3">
             <img 
