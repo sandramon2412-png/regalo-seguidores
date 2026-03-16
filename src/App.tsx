@@ -28,97 +28,19 @@ interface PageContent {
 export default function App() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const oscillatorRef = useRef<OscillatorNode[]>([]);
-  const gainNodeRef = useRef<GainNode | null>(null);
-
-  const initAudio = () => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      gainNodeRef.current = audioCtxRef.current.createGain();
-      gainNodeRef.current.connect(audioCtxRef.current.destination);
-      gainNodeRef.current.gain.setValueAtTime(0, audioCtxRef.current.currentTime);
-    }
-  };
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const toggleMusic = () => {
-    initAudio();
-    const ctx = audioCtxRef.current!;
-    const gain = gainNodeRef.current!;
+    if (!audioRef.current) return;
 
     if (isPlaying) {
-      // Fade out everything
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2);
-      setTimeout(() => {
-        oscillatorRef.current.forEach(osc => {
-          try { osc.stop(); } catch(e) {}
-        });
-        oscillatorRef.current = [];
-        setIsPlaying(false);
-      }, 2000);
+      audioRef.current.pause();
+      setIsPlaying(false);
     } else {
-      if (ctx.state === 'suspended') ctx.resume();
-      
-      // 1. Base Atmospheric Drone (Soft but audible)
-      const baseFreqs = [60, 90]; 
-      baseFreqs.forEach(freq => {
-        const osc = ctx.createOscillator();
-        const oscGain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, ctx.currentTime);
-        oscGain.gain.setValueAtTime(0.1, ctx.currentTime);
-        osc.connect(oscGain);
-        oscGain.connect(gain);
-        osc.start();
-        oscillatorRef.current.push(osc);
+      audioRef.current.play().catch(err => {
+        console.error("Error al reproducir:", err);
+        alert("Aún no has subido el archivo 'musica.mp3' o el formato no es compatible.");
       });
-
-      // 2. Melodic Generator (Pentatonic Scale)
-      const scale = [220, 246.94, 293.66, 329.63, 392, 440]; // A3, B3, D4, E4, G4, A4
-      
-      const playNote = () => {
-        if (!oscillatorRef.current.length) return; // Stop if music was turned off
-        
-        const noteFreq = scale[Math.floor(Math.random() * scale.length)];
-        const osc = ctx.createOscillator();
-        const oscGain = ctx.createGain();
-        
-        // Simple delay for "reverb" effect
-        const delay = ctx.createDelay();
-        const feedback = ctx.createGain();
-        delay.delayTime.value = 0.5;
-        feedback.gain.value = 0.4;
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(noteFreq, ctx.currentTime);
-        
-        // Envelope for a "soft bell" sound
-        oscGain.gain.setValueAtTime(0, ctx.currentTime);
-        oscGain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.1);
-        oscGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 4);
-        
-        osc.connect(oscGain);
-        oscGain.connect(gain);
-        
-        // Connect to delay for echo
-        oscGain.connect(delay);
-        delay.connect(feedback);
-        feedback.connect(delay);
-        delay.connect(gain);
-        
-        osc.start();
-        osc.stop(ctx.currentTime + 6);
-        
-        // Schedule next note at a random interval (2 to 5 seconds)
-        const nextNoteDelay = 2000 + Math.random() * 3000;
-        setTimeout(playNote, nextNoteDelay);
-      };
-
-      // Start the melody
-      playNote();
-
-      // Fade in the whole system (Higher master volume)
-      gain.gain.exponentialRampToValueAtTime(0.8, ctx.currentTime + 2);
       setIsPlaying(true);
     }
   };
@@ -545,9 +467,14 @@ export default function App() {
             >
               {isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               <span className="text-[10px] uppercase tracking-widest font-bold">
-                {isPlaying ? "Sonido Zen: On" : "Sonido Zen: Off"}
+                {isPlaying ? "Música: On" : "Música: Off"}
               </span>
             </button>
+            <audio 
+              ref={audioRef}
+              src="https://cdn.pixabay.com/audio/2022/03/24/audio_7307092141.mp3"
+              loop
+            />
           </div>
           <div className="flex items-center gap-3">
             <img 
