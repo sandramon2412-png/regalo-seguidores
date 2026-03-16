@@ -525,13 +525,13 @@ export default function App() {
             </button>
             <audio 
               ref={audioRef}
-              src="https://assets.mixkit.co/music/preview/mixkit-deep-meditation-109.mp3"
+              src="https://archive.org/download/FREE_background_music_zen_meditation/Zen%20Meditation.mp3"
               loop
               preload="none"
             />
             {audioError && (
               <a 
-                href="https://assets.mixkit.co/music/preview/mixkit-deep-meditation-109.mp3" 
+                href="https://archive.org/download/FREE_background_music_zen_meditation/Zen%20Meditation.mp3" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-[9px] text-brand-accent underline ml-2 animate-pulse"
