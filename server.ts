@@ -167,14 +167,12 @@ Responde SOLO con el JSON array, sin texto adicional.`,
   }
 });
 
-// Serve Vite build in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'dist')));
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-  });
-}
+// Serve Vite build (always)
+app.use(express.static(path.join(__dirname, 'dist')));
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
 app.listen(PORT, () => {
-  console.log(`Servidor API corriendo en http://localhost:${PORT}`);
+  console.log(`App corriendo en http://localhost:${PORT}`);
 });
